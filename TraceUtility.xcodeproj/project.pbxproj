@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		044361AE2185DFF100E38E25 /* GBPrint.m in Sources */ = {isa = PBXBuildFile; fileRef = 044361A42185DFF100E38E25 /* GBPrint.m */; };
+		044361AF2185DFF100E38E25 /* GBSettings.m in Sources */ = {isa = PBXBuildFile; fileRef = 044361A62185DFF100E38E25 /* GBSettings.m */; };
+		044361B02185DFF100E38E25 /* GBCommandLineParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 044361AB2185DFF100E38E25 /* GBCommandLineParser.m */; };
+		044361B12185DFF100E38E25 /* GBOptionsHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 044361AC2185DFF100E38E25 /* GBOptionsHelper.m */; };
 		D2BABC6920E520B80048C20A /* InstrumentsAnalysisCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2BABC6820E520B80048C20A /* InstrumentsAnalysisCore.framework */; };
 		D2BABC6B20E520BF0048C20A /* InstrumentsKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2BABC6A20E520BF0048C20A /* InstrumentsKit.framework */; };
 		D2BABC6D20E521020048C20A /* DVTFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2BABC6C20E521020048C20A /* DVTFoundation.framework */; };
@@ -29,6 +33,16 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		044361A42185DFF100E38E25 /* GBPrint.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GBPrint.m; sourceTree = "<group>"; };
+		044361A52185DFF100E38E25 /* GBCli.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GBCli.h; sourceTree = "<group>"; };
+		044361A62185DFF100E38E25 /* GBSettings.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GBSettings.m; sourceTree = "<group>"; };
+		044361A72185DFF100E38E25 /* GBOptionsHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GBOptionsHelper.h; sourceTree = "<group>"; };
+		044361A82185DFF100E38E25 /* GBCommandLineParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GBCommandLineParser.h; sourceTree = "<group>"; };
+		044361A92185DFF100E38E25 /* GBPrint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GBPrint.h; sourceTree = "<group>"; };
+		044361AA2185DFF100E38E25 /* GBSettings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GBSettings.h; sourceTree = "<group>"; };
+		044361AB2185DFF100E38E25 /* GBCommandLineParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GBCommandLineParser.m; sourceTree = "<group>"; };
+		044361AC2185DFF100E38E25 /* GBOptionsHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GBOptionsHelper.m; sourceTree = "<group>"; };
+		044361AD2185DFF100E38E25 /* GBCli-Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "GBCli-Bridging-Header.h"; sourceTree = "<group>"; };
 		D2BABC6820E520B80048C20A /* InstrumentsAnalysisCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = InstrumentsAnalysisCore.framework; path = /Applications/Xcode.app/Contents/Applications/Instruments.app/Contents/Frameworks/InstrumentsAnalysisCore.framework; sourceTree = "<group>"; };
 		D2BABC6A20E520BF0048C20A /* InstrumentsKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = InstrumentsKit.framework; path = /Applications/Xcode.app/Contents/Applications/Instruments.app/Contents/Frameworks/InstrumentsKit.framework; sourceTree = "<group>"; };
 		D2BABC6C20E521020048C20A /* DVTFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DVTFoundation.framework; path = /Applications/Xcode.app/Contents/SharedFrameworks/DVTFoundation.framework; sourceTree = "<group>"; };
@@ -57,6 +71,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		044361A32185DFF100E38E25 /* GBCli */ = {
+			isa = PBXGroup;
+			children = (
+				044361A42185DFF100E38E25 /* GBPrint.m */,
+				044361A52185DFF100E38E25 /* GBCli.h */,
+				044361A62185DFF100E38E25 /* GBSettings.m */,
+				044361A72185DFF100E38E25 /* GBOptionsHelper.h */,
+				044361A82185DFF100E38E25 /* GBCommandLineParser.h */,
+				044361A92185DFF100E38E25 /* GBPrint.h */,
+				044361AA2185DFF100E38E25 /* GBSettings.h */,
+				044361AB2185DFF100E38E25 /* GBCommandLineParser.m */,
+				044361AC2185DFF100E38E25 /* GBOptionsHelper.m */,
+				044361AD2185DFF100E38E25 /* GBCli-Bridging-Header.h */,
+			);
+			path = GBCli;
+			sourceTree = "<group>";
+		};
 		FE0153E51B9E7E370062C910 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -90,6 +121,7 @@
 		FECBF4811B9D577200D653A7 /* TraceUtility */ = {
 			isa = PBXGroup;
 			children = (
+				044361A32185DFF100E38E25 /* GBCli */,
 				FE0153E61B9E7E630062C910 /* InstrumentsPrivateHeader.h */,
 				FECBF4821B9D577200D653A7 /* main.m */,
 			);
@@ -152,7 +184,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				044361AE2185DFF100E38E25 /* GBPrint.m in Sources */,
+				044361B02185DFF100E38E25 /* GBCommandLineParser.m in Sources */,
+				044361AF2185DFF100E38E25 /* GBSettings.m in Sources */,
 				FECBF4831B9D577200D653A7 /* main.m in Sources */,
+				044361B12185DFF100E38E25 /* GBOptionsHelper.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

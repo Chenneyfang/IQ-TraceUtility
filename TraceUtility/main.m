@@ -8,10 +8,21 @@
 
 #import "InstrumentsPrivateHeader.h"
 #import <objc/runtime.h>
+#import "GBCli.h"
 
 #define TUPrint(format, ...) CFShow((__bridge CFStringRef)[NSString stringWithFormat:format, ## __VA_ARGS__])
 #define TUIvarCast(object, name, type) (*(type *)(void *)&((char *)(__bridge void *)object)[ivar_getOffset(class_getInstanceVariable(object_getClass(object), #name))])
 #define TUIvar(object, name) TUIvarCast(object, name, id const)
+
+typedef NS_ENUM(NSUInteger, IQPerformanceType){
+    IQPerformanceTypeCpu     = 1 << 0,
+    IQPerformanceTypeMemery  = 1 << 1,
+    IQPerformanceTypeNetwork = 1 << 2,
+    IQPerformanceTypeFps     = 1 << 3
+};
+
+static NSString *DEFAULT_PROCESS_NAME = @"xxxx"; //默认进程名为xxxxx
+static IQPerformanceType DEFALUT_PERFORMANCE_TYPE = 1; //默认性能数据为cpu
 
 // Workaround to fix search paths for Instruments plugins and packages.
 static NSBundle *(*NSBundle_mainBundle_original)(id self, SEL _cmd);
@@ -33,18 +44,56 @@ int main(int argc, const char * argv[]) {
         [XRInternalizedSettingsStore configureWithAdditionalURLs:nil];
         [[XRCapabilityRegistry applicationCapabilities]registerCapability:@"com.apple.dt.instruments.track_pinning" versions:NSMakeRange(1, 1)];
         PFTLoadPlugins();
-
+        
         // Instruments has its own subclass of NSDocumentController without overriding sharedDocumentController method.
         // We have to call this eagerly to make sure the correct document controller is initialized.
         [PFTDocumentController sharedDocumentController];
-
+        
         // Open a trace document.
-        NSArray<NSString *> *arguments = NSProcessInfo.processInfo.arguments;
-        if (arguments.count < 2) {
-            TUPrint(@"Usage: %@ [%@]\n", arguments.firstObject.lastPathComponent, @"trace document");
-            return 1;
-        }
-        NSString *tracePath = arguments[1];
+        //        NSArray<NSString *> *arguments = NSProcessInfo.processInfo.arguments;
+        //        if (arguments.count < 2) {
+        //            TUPrint(@"Usage: %@ [%@]\n", arguments.firstObject.lastPathComponent, @"trace document");
+        //            return 1;
+        //        }
+        //      NSString *tracePath = arguments[1];
+        
+        GBSettings *settings = [GBSettings settingsWithName:@"CmdLine" parent:nil];
+        [settings setInteger:50 forKey:@"optiona"];
+        [settings setInteger:12 forKey:@"optionb"];
+        
+        // Create parser and register all options.
+        GBCommandLineParser *parser = [[GBCommandLineParser alloc] init];
+        [parser registerOption:@"optiona" shortcut:'a' requirement:GBValueRequired];
+        [parser registerOption:@"optionb" shortcut:'b' requirement:GBValueOptional];
+        [parser registerOption:@"optionc" shortcut:0 requirement:GBValueNone];
+        
+        
+        // Parse command line
+        [parser parseOptionsWithArguments:argv count:argc block:^(GBParseFlags flags, NSString *option, id value, BOOL *stop) {
+            switch (flags) {
+                case GBParseFlagUnknownOption:
+                    printf("Unknown command line option %s, try --help!\n", [option UTF8String]);
+                    break;
+                case GBParseFlagMissingValue:
+                    printf("Missing value for command line option %s, try --help!\n", [option UTF8String]);
+                    break;
+                case GBParseFlagOption:
+                    [settings setObject:value forKey:option];
+                    break;
+                case GBParseFlagArgument:
+                    [settings addArgument:value];
+                    break;
+            }
+        }];
+        
+        
+        // From here on, just use settings...
+        NSInteger a = [settings integerForKey:@"optiona"];
+        NSInteger b = [settings integerForKey:@"optionb"];
+        NSLog(@"a: %ld, b: %ld", a, b);
+        
+        IQPerformanceType myType = 15;// > 0 ? 15: DEFALUT_PERFORMANCE_TYPE;
+        NSString *tracePath = [NSString stringWithFormat:@"/Users/cheney/Desktop/Instruments.trace"];
         NSError *error = nil;
         PFTTraceDocument *document = [[PFTTraceDocument alloc]initWithContentsOfURL:[NSURL fileURLWithPath:tracePath] ofType:@"com.apple.instruments.trace" error:&error];
         if (error) {
@@ -52,18 +101,18 @@ int main(int argc, const char * argv[]) {
             return 1;
         }
         TUPrint(@"Trace: %@\n", tracePath);
-
+        
         // List some useful metadata of the document.
         XRDevice *device = document.targetDevice;
         TUPrint(@"Device: %@ (%@ %@ %@)\n", device.deviceDisplayName, device.productType, device.productVersion, device.buildVersion);
         PFTProcess *process = document.defaultProcess;
         TUPrint(@"Process: %@ (%@)\n", process.displayName, process.bundleIdentifier);
-
+        
         // Each trace document consists of data from several different instruments.
         XRTrace *trace = document.trace;
         for (XRInstrument *instrument in trace.allInstrumentsList.allInstruments) {
             TUPrint(@"\nInstrument: %@ (%@)\n", instrument.type.name, instrument.type.uuid);
-
+            
             // Each instrument can have multiple runs.
             NSArray<XRRun *> *runs = instrument.allRuns;
             if (runs.count == 0) {
@@ -73,7 +122,7 @@ int main(int argc, const char * argv[]) {
             for (XRRun *run in runs) {
                 TUPrint(@"Run #%@: %@\n", @(run.runNumber), run.displayName);
                 instrument.currentRun = run;
-
+                
                 // Common routine to obtain contexts for the instrument.
                 NSMutableArray<XRContext *> *contexts = [NSMutableArray array];
                 if (![instrument isKindOfClass:XRLegacyInstrument.class]) {
@@ -89,7 +138,7 @@ int main(int argc, const char * argv[]) {
                         detailNode = detailNode.nextSibling;
                     }
                 }
-
+                
                 // Different instruments can have different data structure.
                 // Here are some straightforward example code demonstrating how to process the data from several commonly used instruments.
                 NSString *instrumentID = instrument.type.uuid;
@@ -136,7 +185,7 @@ int main(int argc, const char * argv[]) {
                         NSString *size = [byteFormatter stringForObjectValue:sizeGroupedByTime[time]];
                         TUPrint(@"%@ %@\n", time, size);
                     }
-                } else if ([instrumentID isEqualToString:@"com.apple.dt.coreanimation-fps"]) {
+                } else if ([instrumentID isEqualToString:@"com.apple.dt.coreanimation-fps"] && (myType & IQPerformanceTypeFps)) {
                     // Core Animation FPS: print out all FPS data samples.
                     // 2 contexts: Measurements, Statistics
                     XRContext *context = contexts[0];
@@ -159,7 +208,7 @@ int main(int argc, const char * argv[]) {
                             }
                         }];
                     }];
-                } else if ([instrumentID isEqualToString:@"com.apple.dt.network-connections"]) {
+                } else if ([instrumentID isEqualToString:@"com.apple.dt.network-connections"] &&(myType & IQPerformanceTypeNetwork)) {
                     // Connections: print out connection history with protocol, addresses and bytes transferred.
                     // 4 contexts: Summary By Process, Summary By Interface, History, Active Connections
                     XRContext *context = contexts[2];
@@ -172,6 +221,8 @@ int main(int argc, const char * argv[]) {
                             while (XRAnalysisCoreReadCursorNext(cursor)) {
                                 BOOL result = NO;
                                 XRAnalysisCoreValue *object = nil;
+                                result = XRAnalysisCoreReadCursorGetValue(cursor, 0, &object);
+                                NSString *timeNow = result ? [formatter stringForObjectValue:object] : @"";
                                 result = XRAnalysisCoreReadCursorGetValue(cursor, 4, &object);
                                 NSString *interface = result ? [formatter stringForObjectValue:object] : @"";
                                 result = XRAnalysisCoreReadCursorGetValue(cursor, 5, &object);
@@ -184,7 +235,7 @@ int main(int argc, const char * argv[]) {
                                 NSString *bytesIn = result ? [formatter stringForObjectValue:object] : @"";
                                 result = XRAnalysisCoreReadCursorGetValue(cursor, 12, &object);
                                 NSString *bytesOut = result ? [formatter stringForObjectValue:object] : @"";
-                                TUPrint(@"%@ %@ %@<->%@, %@ in, %@ out\n", interface, protocol, local, remote, bytesIn, bytesOut);
+                                TUPrint(@"%@ %@ %@ %@<->%@, %@ in, %@ out\n",timeNow, interface, protocol, local, remote, bytesIn, bytesOut);
                             }
                         }];
                     }];
@@ -200,16 +251,46 @@ int main(int argc, const char * argv[]) {
                         XREngineeringTypeFormatter *formatter = TUIvarCast(array.source, _filter, XRAnalysisCoreTableQuery * const).fullTextSearchSpec.formatter;
                         [array access:^(XRAnalysisCorePivotArrayAccessor *accessor) {
                             [accessor readRowsStartingAt:0 dimension:0 block:^(XRAnalysisCoreReadCursor *cursor) {
-                                SInt64 columnCount = XRAnalysisCoreReadCursorColumnCount(cursor);
+                                //SInt64 columnCount = XRAnalysisCoreReadCursorColumnCount(cursor);
                                 while (XRAnalysisCoreReadCursorNext(cursor)) {
                                     BOOL result = NO;
                                     XRAnalysisCoreValue *object = nil;
+                                    //                                    NSMutableString *string = [NSMutableString string];
+                                    //                                    for (SInt64 column = 0; column < columnCount; column++) {
+                                    //                                        result = XRAnalysisCoreReadCursorGetValue(cursor, column, &object);
+                                    //                                        [string appendString:result ? [formatter stringForObjectValue:object] : @""];
+                                    //                                        [string appendFormat:@", "];
+                                    //                                    }
+                                    //                                    TUPrint(@"%@", string);
+                                    //process
                                     NSMutableString *string = [NSMutableString string];
-                                    for (SInt64 column = 0; column < columnCount; column++) {
-                                        result = XRAnalysisCoreReadCursorGetValue(cursor, column, &object);
-                                        [string appendString:result ? [formatter stringForObjectValue:object] : @""];
+                                    
+                                    result = XRAnalysisCoreReadCursorGetValue(cursor, 2, &object);
+                                    NSString *process = result ? [formatter stringForObjectValue:object] : @"";
+                                    if (![process containsString:DEFAULT_PROCESS_NAME]) {
+                                        continue;
+                                    }
+                                    [string appendString:process];
+                                    [string appendFormat:@", "];
+                                    //current time
+                                    result = XRAnalysisCoreReadCursorGetValue(cursor, 0, &object);
+                                    NSString *timeNow = result ? [formatter stringForObjectValue:object] : @"";
+                                    [string appendString:timeNow];
+                                    [string appendFormat:@", "];
+                                    //cpu
+                                    if (IQPerformanceTypeCpu & myType) {
+                                        result = XRAnalysisCoreReadCursorGetValue(cursor, 6, &object);
+                                        NSString *cpu = result ? [formatter stringForObjectValue:object] : @"";
+                                        [string appendString:cpu];
                                         [string appendFormat:@", "];
                                     }
+                                    if (IQPerformanceTypeMemery & myType) {
+                                        result = XRAnalysisCoreReadCursorGetValue(cursor, 10, &object);
+                                        NSString *memery = result ? [formatter stringForObjectValue:object] : @"";
+                                        [string appendString:memery];
+                                        [string appendFormat:@", "];
+                                    }
+                                    //memery
                                     TUPrint(@"%@", string);
                                 }
                             }];
@@ -218,7 +299,7 @@ int main(int argc, const char * argv[]) {
                 } else {
                     TUPrint(@"Data processor has not been implemented for this type of instrument.\n");
                 }
-
+                
                 // Common routine to cleanup after done.
                 if (![instrument isKindOfClass:XRLegacyInstrument.class]) {
                     [instrument.viewController instrumentWillBecomeInvalid];
@@ -226,10 +307,11 @@ int main(int argc, const char * argv[]) {
                 }
             }
         }
-
+        
         // Close the document safely.
         [document close];
         PFTClosePlugins();
     }
     return 0;
 }
+
